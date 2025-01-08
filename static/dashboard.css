@@ -1,0 +1,93 @@
+/* General Page Styling */
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Header Styling */
+header {
+    background-color: #4CAF50;
+    color: #fff;
+    padding: 20px 10px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2rem;
+}
+
+/* Navigation Bar Styling */
+nav {
+    display: flex;
+    justify-content: center;
+    background: #333;
+    padding: 10px 0;
+    margin-bottom: 20px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 15px;
+    font-size: 1.1rem;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+nav a:hover {
+    background-color: #4CAF50;
+}
+
+/* Dashboard Container */
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Welcome Message */
+.container h2 {
+    margin-top: 0;
+    font-size: 1.8rem;
+    text-align: center;
+}
+
+/* Links for Upload and Files */
+.dashboard-links {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+
+.dashboard-links a {
+    text-decoration: none;
+    color: #fff;
+    background-color: #4CAF50;
+    padding: 15px 25px;
+    font-size: 1.1rem;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.dashboard-links a:hover {
+    background-color: #45a049;
+}
+
+/* Footer Styling */
+footer {
+    margin-top: 20px;
+    background: #333;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 0.9rem;
+}
