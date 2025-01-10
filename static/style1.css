@@ -66,3 +66,13 @@ a:hover {
 .file-actions a:focus {
     outline: none;
 }
+
+.feedback-messages {
+    list-style: none;
+    padding: 10px;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 5px;
+    margin: 20px 0;
+}

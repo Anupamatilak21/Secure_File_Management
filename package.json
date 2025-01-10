@@ -1,0 +1,24 @@
+{
+  "name": "secure_file_sharing",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anupamatilak21/secure_file_sharing_website.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Anupamatilak21/secure_file_sharing_website/issues"
+  },
+  "homepage": "https://github.com/Anupamatilak21/secure_file_sharing_website#readme",
+  "dependencies": {
+    "electron": "^33.3.1"
+  }
+}
