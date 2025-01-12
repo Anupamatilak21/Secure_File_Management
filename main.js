@@ -13,10 +13,10 @@ function createWindow() {
     }
   });
 
-  // Load your HTML page (front-end of your app)
-  mainWindow.loadURL('http://localhost:5000'); // This points to your Flask app
+  // Loading  HTML page 
+  mainWindow.loadURL('http://localhost:5000'); 
 
-  // Open DevTools (optional)
+  
   mainWindow.webContents.openDevTools();
 
   mainWindow.on('closed', () => {
@@ -25,9 +25,8 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  // Start the Flask server
-  const flaskApp = spawn('python', ['app.py']); // Replace with the path to your Flask app if needed
-
+  // Starting the Flask server
+  const flaskApp = spawn('python', ['app.py']); 
   flaskApp.stdout.on('data', (data) => {
     console.log(`stdout: ${data}`);
   });

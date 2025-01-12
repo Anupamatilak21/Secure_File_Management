@@ -26,6 +26,13 @@
         <label for="file">Choose a file to upload:</label>
         <input type="file" id="file" name="file" required><br>
         
+        <label for="encryption_method">Choose Encryption Method:</label>
+        <select name="encryption_method" id="encryption_method" required>
+            <option value="AES">AES</option>
+            <option value="DES">DES</option>
+            <option value="RSA">RSA</option>
+        </select>
+
         <input type="submit" value="Upload">
     </form>
 

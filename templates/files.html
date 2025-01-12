@@ -16,6 +16,10 @@
             <tr>
                 <th>Filename</th>
                 <th>Upload Date</th>
+                <th>Encryption Algorithm</th>                
+                <th>File Size Before</th>
+                <th>Encryption Time</th>
+                <th>File Size After</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -24,6 +28,10 @@
             <tr>
                 <td>{{ file['filename'] }}</td>
                 <td>{{ file['uploaded_at'] }}</td>
+                <td>{{ file['encryption_method']}}</td>
+                <td>{{ file['file_size_before'] }} bytes</td>
+                <td>{{ file['encryption_time'] }} seconds</td>
+                <td>{{ file['file_size_after'] }} bytes</td>
                 <td>
                     <div class="file-actions">
                         <a href="{{ url_for('download', file_id=file.id) }}" class="btn btn-primary">Download</a>
