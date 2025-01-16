@@ -1,0 +1,49 @@
+<!-- admin_dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin_style.css') }}">
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <ul class="nav-links">
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('upload') }}">Upload File</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                
+            </ul>
+        </nav>
+    </header>
+
+
+    <main class="admin-dashboard">
+        <h1>Welcome to the Admin Dashboard</h1>
+
+        <div class="dashboard-cards">
+            <!-- Users Overview -->
+            <div class="card">
+                <h2>Users Overview</h2>
+                <p>Total Users: <strong>{{ total_users }}</strong></p>
+                <a href="{{ url_for('view_users') }}" class="btn btn-primary">View All Users</a>
+            </div>
+
+            <!-- Files Overview -->
+            <div class="card">
+                <h2>Files Overview</h2>
+                <p>Total Files Uploaded: <strong>{{ total_files }}</strong></p>
+                <a href="{{ url_for('files') }}" class="btn btn-primary">View All Files</a>
+            </div>
+
+            
+
+        </div>
+    </main>
+
+    
+</body>
+</html>

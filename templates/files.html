@@ -16,6 +16,7 @@
             <tr>
                 <th>Filename</th>
                 <th>Upload Date</th>
+                <th>Uploaded By</th>
                 <th>Encryption Algorithm</th>                
                 <th>File Size Before</th>
                 <th>Encryption Time</th>
@@ -28,18 +29,21 @@
             <tr>
                 <td>{{ file['filename'] }}</td>
                 <td>{{ file['uploaded_at'] }}</td>
+                <td>{{ file['uploaded_by'] }}</td>
                 <td>{{ file['encryption_method']}}</td>
                 <td>{{ file['file_size_before'] }} bytes</td>
                 <td>{{ file['encryption_time'] }} seconds</td>
                 <td>{{ file['file_size_after'] }} bytes</td>
-                <td>
-                    <div class="file-actions">
-                        <a href="{{ url_for('download', file_id=file.id) }}" class="btn btn-primary">Download</a>
-                        <form action="{{ url_for('delete', file_id=file.id) }}" method="POST" style="display:inline;">
-                            <button type="submit" class="btn btn-danger">Delete</button>
-                        </form>
-                    </div>
-                </td>                
+                {% if session['role_name'] == 'Admin' %}
+                    <td>
+                        <div class="file-actions">
+                            <a href="{{ url_for('download', file_id=file.id) }}" class="btn btn-primary">Download</a>
+                            <form action="{{ url_for('delete', file_id=file.id) }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </form>
+                        </div>
+                    </td> 
+                {% endif %}               
             </tr>
             {% endfor %}
         </tbody>

@@ -1,0 +1,129 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+h1 {
+    text-align: center;
+    margin-top: 20px;
+    color: #007bff;
+}
+
+a {
+    text-decoration: none;
+}
+
+/* Navigation Bar */
+.navbar {
+    background-color: #007bff;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 15px;
+}
+
+.nav-links li a {
+    color: #ffffff;
+    font-size: 1rem;
+    padding: 8px 12px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.nav-links li a:hover {
+    background-color: #0056b3;
+}
+
+/* Dashboard Cards */
+.dashboard-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    margin: 30px auto;
+    max-width: 1200px;
+}
+
+.card {
+    flex: 1;
+    max-width: 400px;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card h2 {
+    font-size: 1.5rem;
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.card p {
+    font-size: 1.2rem;
+    margin: 15px 0;
+}
+
+.card a.btn-primary {
+    display: inline-block;
+    padding: 10px 15px;
+    font-size: 1rem;
+    color: #ffffff;
+    background-color: #28a745;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.card a.btn-primary:hover {
+    background-color: #218838;
+}
+
+/* Footer 
+footer {
+    text-align: center;
+    margin-top: 30px;
+    padding: 10px 0;
+    background-color: #f1f1f1;
+    color: #333;
+    font-size: 0.9rem;
+    border-top: 1px solid #ddd;
+}
+*/
+
+/* Media Queries for Responsiveness 
+@media (max-width: 768px) {
+    .dashboard-cards {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .card {
+        max-width: 90%;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+*/
+

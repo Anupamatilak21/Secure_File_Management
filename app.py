@@ -1,4 +1,5 @@
 import os
+from db import app, mysql
 from flask import Flask, render_template, request, redirect, url_for, flash , send_file, session
 from Crypto.Cipher import AES , DES 
 from Crypto.Cipher import PKCS1_OAEP
@@ -8,35 +9,37 @@ from Crypto.Random import get_random_bytes
 from werkzeug.security import check_password_hash , generate_password_hash
 from werkzeug.utils import secure_filename
 from flask_mysqldb import MySQL
-import mysql.connector
+import MySQLdb
 import MySQLdb.cursors 
 import time
+from flask_login import LoginManager, login_user, current_user, logout_user
+from roles import User , role_required
+from roles import admin_dashboard,view_users, change_user_role, delete_user
 
-app = Flask(__name__)
-
-'''
-HARDCODED_USER = {
-    'username' :'admin',
-    'password' : generate_password_hash('pass123')
-}
-'''
 
 # UPLOADING Folder
 app.config['UPLOAD_FOLDER'] ='uploads'
-#app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Limiting file size to 16 MB
 app.secret_key = 'your_secret_key'
 
 # Checking the uploading folder existence 
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-# MySQL Configuration
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = 'mysql@123'
-app.config['MYSQL_DB'] = 'secure_file_sharing'
+login_manager = LoginManager(app)
 
-mysql = MySQL(app)
+### Role Based Access
+
+@login_manager.user_loader
+def load_user(user_id):
+    # Fetch user details by ID
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT id, username, role_name FROM users WHERE id = %s", (user_id,))
+    user_data = cur.fetchone()
+    cur.close()
+
+    if user_data:
+        return User(id=user_data[0], username=user_data[1], role_name=user_data[2])
+    return None
 
 ### HOME
 
@@ -57,7 +60,17 @@ def dashboard():
         flash("Please log in to access the dashboard.")
         return redirect(url_for('login'))
     
-    return render_template('dashboard.html' , username = session.get('username'))
+    role = session.get('role_name')
+
+    if role == 'Admin':
+        return render_template('admin_dashboard.html')  # Admin-specific dashboard
+    elif role == 'Manager':
+        return render_template('manager_dashboard.html')  # Manager-specific dashboard
+    elif role == 'Employee':
+        return render_template('employee_dashboard.html')  # Employee-specific dashboard
+    else:
+        flash("Invalid role.")
+        return render_template('login.html' , username = session.get('username'))
 
 
 ### LOGIN EXISTNG USERS
@@ -71,7 +84,7 @@ def login():
 
         # Query to fetch user details from the database
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cur.execute("SELECT id, password_hash FROM users WHERE username = %s", (username,))
+        cur.execute("SELECT id, password_hash, role_name FROM users WHERE username = %s", (username,))
         user = cur.fetchone()
         cur.close()
 
@@ -79,6 +92,7 @@ def login():
             # Store user ID in the session for further reference
             session['user_id'] = user['id']
             session['username'] = username
+            session['role_name'] = user['role_name']
             flash('Login successful !')
             return redirect(url_for('dashboard'))
         else:
@@ -106,6 +120,7 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        role_name = request.form.get('role_name', 'Employee')
 
         cur = mysql.connection.cursor()
         cur.execute("SELECT id FROM users WHERE username = %s", (username,))
@@ -115,11 +130,20 @@ def register():
             flash('Username already exists. Please choose a different one.')
             return redirect(url_for('register'))
         
+        # Fetching the role_id based on the role_name
+        cur.execute("SELECT id FROM roles WHERE role_name = %s", (role_name,))
+        role = cur.fetchone()
+        role_id = role[0] if role else None
+
+        if not role_id:
+            flash("Invalid role selected.")
+            return redirect(url_for('register'))
+        
         #HAshing password before storing
         hashed_password = generate_password_hash(password)
 
         cur.execute(
-            "INSERT INTO users (username, password_hash) VALUES (%s , %s)" , (username, hashed_password)
+            "INSERT INTO users (username, password_hash, role_id, role_name) VALUES (%s , %s, %s , %s)" , (username, hashed_password, role_id, role_name)
         )
         mysql.connection.commit()
         cur.close()
@@ -158,7 +182,7 @@ def upload():
             encrypted_filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
             # Variables declared
-            encryption_key = None
+            key_data = None
             iv = None
             private_key = None
             file_size_before = len(file_data)
@@ -167,21 +191,22 @@ def upload():
 
             try:
                 start_time = time.time()
+                '''
                 if encryption_method == 'AES':
                     # AES Encryption
-                    encryption_key = get_random_bytes(16)  # AES key: 16 bytes
-                    cipher = AES.new(encryption_key, AES.MODE_CBC)
+                    key_data = get_random_bytes(16)  # AES key: 16 bytes
+                    cipher = AES.new(key_data, AES.MODE_CBC)
                     iv = cipher.iv
                     encrypted_data = cipher.encrypt(pad(file_data, AES.block_size))
 
                 elif encryption_method == 'DES':
                     # DES Encryption
-                    encryption_key = get_random_bytes(8)  # DES key: 8 bytes
-                    cipher = DES.new(encryption_key, DES.MODE_CBC)
+                    key_data = get_random_bytes(8)  # DES key: 8 bytes
+                    cipher = DES.new(key_data, DES.MODE_CBC)
                     iv = cipher.iv
                     encrypted_data = cipher.encrypt(pad(file_data, DES.block_size))
-
-                elif encryption_method == 'RSA':
+                '''
+                if encryption_method == 'RSA':
                     # RSA Encryption
                     key_pair = RSA.generate(2048)  # Generate RSA keys
                     public_key = key_pair.publickey()
@@ -198,7 +223,8 @@ def upload():
                     # Encrypt the AES key with RSA
                     cipher_rsa = PKCS1_OAEP.new(public_key)
                     encrypted_aes_key = cipher_rsa.encrypt(aes_key)  # Encrypt the AES key with RSA
-                    
+                    key_data = encrypted_aes_key    #Giving a generic name key data so that it is easier to add into the databse 
+
                     # Store the encrypted file and encrypted AES key (along with the IV)
                     filename = secure_filename(file.filename)
                     encrypted_filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -215,20 +241,22 @@ def upload():
                     f.write(encrypted_data)
 
                 user_id = session['user_id']  #Get the user_id of the logged-in user
+                uploaded_by = session['username']
                 
                 cur = mysql.connection.cursor()
                 cur.execute(
-                    "INSERT INTO files (filename, filepath, encryption_key, iv, private_key, encryption_method, file_size_before, file_size_after, encryption_time, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    "INSERT INTO files (filename, filepath, encryption_key, iv, private_key, encryption_method, file_size_before, file_size_after, encryption_time, user_id, uploaded_by) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     (filename,
                         encrypted_filepath,
-                        encryption_key.hex() if encryption_key else None,
+                        key_data.hex() if key_data else None,
                         iv.hex() if iv else None,
                         private_key,
                         encryption_method,
                         file_size_before,
                         file_size_after,
                         encryption_time,
-                        user_id
+                        user_id,
+                        uploaded_by
                     )
                 )
                 mysql.connection.commit()
@@ -254,11 +282,18 @@ def files():
         flash("Please log in to access this page.")
         return redirect(url_for('login'))
     
-    user_id = session['user_id'] 
+    user_id = session['user_id']
+    role_name = session['role_name'] 
 
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT id, filename, uploaded_at, encryption_method, file_size_before, encryption_time, file_size_after FROM files WHERE user_id = %s", (user_id,))
-    uploaded_files = cur.fetchall()
+
+    if role_name == 'Admin':
+        cur.execute("SELECT id, filename, uploaded_at, encryption_method, file_size_before, encryption_time, file_size_after, uploaded_by FROM files")
+        uploaded_files = cur.fetchall()
+    else:        
+        cur.execute("SELECT id, filename, uploaded_at, encryption_method, file_size_before, encryption_time, file_size_after FROM files WHERE user_id = %s", (user_id,))
+        uploaded_files = cur.fetchall()
+    
     cur.close()
 
     return render_template('files.html', files=uploaded_files)
@@ -272,7 +307,7 @@ def download(file_id):
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
     #Fetching files and encryption data
-    cur.execute("SELECT filepath, filename, encryption_key, iv, encryption_method FROM files WHERE id = %s", (file_id,))
+    cur.execute("SELECT filepath, filename, encryption_key, iv, encryption_method, private_key FROM files WHERE id = %s", (file_id,))
     file_data = cur.fetchone()
     cur.close()
 
@@ -282,8 +317,9 @@ def download(file_id):
     
     file_path = file_data['filepath']
     encryption_method = file_data['encryption_method']
-    encryption_key = file_data['encryption_key']
-    iv = file_data['iv']
+    encryption_key_hex = file_data['encryption_key']
+    iv_hex = file_data['iv']
+    private_key_pem = file_data['private_key']
 
     if not file_path or not os.path.exists(file_path):
         flash('File path is invalid or the file does not exist.')
@@ -296,32 +332,59 @@ def download(file_id):
             encrypted_data = f.read()   
 
         decrypted_data =None
-
+        '''
         if encryption_method == 'AES':
-            if not encryption_key or not iv:
+            if not encryption_key_hex or not iv_hex:
                 flash('Missing encryption key or IV for AES.')
                 return redirect(url_for('files'))
-            cipher = AES.new(bytes.fromhex(encryption_key), AES.MODE_CBC, bytes.fromhex(iv))
+            
+            encryption_key = bytes.fromhex(encryption_key_hex)
+            iv = bytes.fromhex(iv_hex)
+
+            if len(encryption_key) != 16:
+                flash('Invalid AES key length.')
+                return redirect(url_for('files'))
+
+            if len(iv) != 16:
+                flash('Invalid AES IV length.')
+                return redirect(url_for('files'))
+            
+            cipher = AES.new(encryption_key, AES.MODE_CBC,iv)
             decrypted_data = unpad(cipher.decrypt(encrypted_data), AES.block_size)
 
         elif encryption_method == 'DES':
-            if not encryption_key or not iv:
+            if not encryption_key_hex or not iv_hex:
                 flash('Missing encryption key or IV for DES.')
                 return redirect(url_for('files'))
-            cipher = DES.new(bytes.fromhex(encryption_key), DES.MODE_CBC, bytes.fromhex(iv))
+
+            encryption_key = bytes.fromhex(encryption_key_hex)
+            iv = bytes.fromhex(iv_hex)
+
+            if len(encryption_key) != 8:
+                flash('Invalid DES key length.')
+                return redirect(url_for('files'))
+
+            if len(iv) != 8:
+                flash('Invalid DES IV length.')
+                return redirect(url_for('files'))
+
+            cipher = DES.new(encryption_key, DES.MODE_CBC,iv)
             decrypted_data = unpad(cipher.decrypt(encrypted_data), DES.block_size)
 
-        elif encryption_method == 'RSA':
-            if not private_key:
-                flash('Missing private key for RSA decryption.')
+        '''
+        if encryption_method == 'RSA':
+            if not private_key_pem or not encryption_key_hex or not iv_hex:
+                flash('Missing private key, encryption key, or IV for RSA decryption.')
                 return redirect(url_for('files'))
-            # Decrypt the AES key with RSA
-            private_key = RSA.import_key(bytes.fromhex(private_key)) 
+            
+            private_key = RSA.import_key(private_key_pem)
+            encrypted_aes_key = bytes.fromhex(encryption_key_hex)
+            iv = bytes.fromhex(iv_hex) 
             cipher_rsa = PKCS1_OAEP.new(private_key)
-            decrypted_aes_key = cipher_rsa.decrypt(bytes.fromhex(encryption_key))  # encrypted AES key from DB
+            decrypted_aes_key = cipher_rsa.decrypt(encrypted_aes_key)  # encrypted AES key from DB
 
             # Decrypt the file using the decrypted AES key
-            cipher_aes = AES.new(decrypted_aes_key, AES.MODE_CBC, bytes.fromhex(iv))  # iv is from DB
+            cipher_aes = AES.new(decrypted_aes_key, AES.MODE_CBC,iv)  # iv is from DB
             decrypted_data = unpad(cipher_aes.decrypt(encrypted_data), AES.block_size)
 
         else:
@@ -338,7 +401,7 @@ def download(file_id):
         flash(f"File {decrypted_filename} has been downloaded successfully!")
         return redirect(url_for('files'))
 
-    except Exception as e:
+    except ValueError as e:
         flash(f"Error during decryption: {str(e)}")
         return redirect(url_for('files'))
 
@@ -347,8 +410,9 @@ def download(file_id):
 
 
 @app.route('/delete/<int:file_id>', methods=['POST'])
+@role_required('Admin')
 def delete(file_id):
-    cur = mysql.connection.cursor()
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cur.execute("SELECT filepath, filename FROM files WHERE id = %s", (file_id,))
     file_data = cur.fetchone()
 
@@ -376,6 +440,31 @@ def delete(file_id):
 
     cur.close()
     return redirect(url_for('files'))
+
+
+### ROLE-Management
+
+@app.route('/admin/dashboard')
+@role_required('Admin')
+def admin_dashboard():
+    return render_template('admin_dashboard.html')
+
+@app.route('/manager/files')
+@role_required('Manager')
+def manager_files():
+    return render_template('manager_files.html')
+
+@app.route('/employee/tasks')
+@role_required('Employee')
+def employee_tasks():
+    return render_template('employee_tasks.html')
+
+#### ADMIN 
+app.add_url_rule('/admin/dashboard', 'admin_dashboard', admin_dashboard)
+app.add_url_rule('/admin/view_users', 'view_users', view_users)
+app.add_url_rule('/admin/change_user_role/<int:user_id>', 'change_user_role', change_user_role)
+app.add_url_rule('/admin/delete_user/<int:user_id>', 'delete_user', delete_user)
+
 
 
 if __name__ == "__main__":
