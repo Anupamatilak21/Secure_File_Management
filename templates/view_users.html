@@ -1,10 +1,10 @@
-<!-- view_users.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Users</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='view_users.css') }}">
 </head>
 <body>
     <h1>Users List</h1>
@@ -22,15 +22,20 @@
                 <td>{{ user.username }}</td>
                 <td>{{ user.role_name }}</td>
                 <td>
-                    <!-- Option to change role or delete -->
-                    <a href="{{ url_for('change_user_role', user_id=user.id) }}">Change Role</a> |
-                    <a href="{{ url_for('delete_user', user_id=user.id) }}">Delete</a>
+                    {% if session['role_name'] == 'Admin' %}
+                        <!-- Admin can change role or delete -->
+                        <a href="{{ url_for('change_user_role', user_id=user.id) }}">Change Role</a> |
+                        <a href="{{ url_for('delete_user', user_id=user.id) }}">Delete</a>
+                    {% else %}
+                        <!-- Manager can only view -->
+                        No actions available
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Return to Admin Dashboard</a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Return to Dashboard</a>
 </body>
 </html>

@@ -5,6 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Management - Secure File Sharing</title>
     <link rel="stylesheet" href="static/style1.css">
+    <script>
+        function updateShareStatus(fileId, isChecked) {
+            fetch(`/update_share_status/${fileId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ shared_with_team: isChecked })
+            }).then(response => response.json())
+              .then(data => {
+                  alert(data.message);
+              }).catch(error => {
+                  console.error('Error updating share status:', error);
+              });
+        }
+    </script>
+    
 </head>
 <body>
     <header>
@@ -34,6 +51,23 @@
                 <td>{{ file['file_size_before'] }} bytes</td>
                 <td>{{ file['encryption_time'] }} seconds</td>
                 <td>{{ file['file_size_after'] }} bytes</td>
+
+                <!-- Shared with Team Checkbox 
+                <td>
+                    {% if session['role_name'] == 'Manager' or session['role_name'] == 'Admin' %}
+                        <input type="checkbox" 
+                               {% if file['shared_with_team'] %}checked{% endif %}
+                               onchange="updateShareStatus({{ file.id }}, this.checked)">
+                    {% else %}
+                        {% if file['shared_with_team'] %}
+                            Yes
+                        {% else %}
+                            No
+                        {% endif %}
+                    {% endif %}
+                </td> -->
+
+                <!-- Actions -->
                 {% if session['role_name'] == 'Admin' %}
                     <td>
                         <div class="file-actions">
@@ -42,7 +76,29 @@
                                 <button type="submit" class="btn btn-danger">Delete</button>
                             </form>
                         </div>
-                    </td> 
+                    </td>
+                {% elif session['role_name'] == 'Manager' %}
+                    <td>
+                        <div class="file-actions">
+                            <a href="{{ url_for('download', file_id=file.id) }}" class="btn btn-primary">Download</a>
+                            {% if file['uploaded_by'] == session['username'] or session['role_name'] == 'Manager' %}
+                                <form action="{{ url_for('delete', file_id=file.id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                {% elif session['role_name'] == 'Employee' %}
+                    <td>
+                        <div class="file-actions">
+                            <a href="{{ url_for('download', file_id=file.id) }}" class="btn btn-primary">Download</a>
+                            {% if file['uploaded_by'] == session['username'] %}
+                                <form action="{{ url_for('delete', file_id=file.id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </td>
                 {% endif %}               
             </tr>
             {% endfor %}

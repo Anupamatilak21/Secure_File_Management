@@ -1,6 +1,6 @@
 import os
 from db import app, mysql
-from flask import Flask, render_template, request, redirect, url_for, flash , send_file, session
+from flask import Flask, render_template, request, redirect, url_for, flash , send_file, session, jsonify
 from Crypto.Cipher import AES , DES 
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
@@ -15,7 +15,7 @@ import time
 from flask_login import LoginManager, login_user, current_user, logout_user
 from roles import User , role_required
 from roles import admin_dashboard,view_users, change_user_role, delete_user
-
+from roles import manager_dashboard,employee_dashboard
 
 # UPLOADING Folder
 app.config['UPLOAD_FOLDER'] ='uploads'
@@ -84,7 +84,7 @@ def login():
 
         # Query to fetch user details from the database
         cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cur.execute("SELECT id, password_hash, role_name FROM users WHERE username = %s", (username,))
+        cur.execute("SELECT id, password_hash, role_name, manager_id FROM users WHERE username = %s", (username,))
         user = cur.fetchone()
         cur.close()
 
@@ -93,6 +93,7 @@ def login():
             session['user_id'] = user['id']
             session['username'] = username
             session['role_name'] = user['role_name']
+            session['manager_id'] = user['manager_id'] # Store manager_id for employees
             flash('Login successful !')
             return redirect(url_for('dashboard'))
         else:
@@ -121,6 +122,7 @@ def register():
         username = request.form['username']
         password = request.form['password']
         role_name = request.form.get('role_name', 'Employee')
+        manager_id = request.form.get('manager_id') if role_name == 'Employee' else None
 
         cur = mysql.connection.cursor()
         cur.execute("SELECT id FROM users WHERE username = %s", (username,))
@@ -143,15 +145,23 @@ def register():
         hashed_password = generate_password_hash(password)
 
         cur.execute(
-            "INSERT INTO users (username, password_hash, role_id, role_name) VALUES (%s , %s, %s , %s)" , (username, hashed_password, role_id, role_name)
+            "INSERT INTO users (username, password_hash, role_id, role_name, manager_id) VALUES (%s , %s, %s , %s , %s)" , (username, hashed_password, role_id, role_name, manager_id)
         )
         mysql.connection.commit()
         cur.close()
 
         flash('Registration successful! Please log in.')
         return redirect(url_for('login'))
+    
+    # For GET request, fetch the list of managers
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT id, username FROM users WHERE role_name = 'Manager'")
+    managers = cur.fetchall()
+    cur.close()
 
-    return render_template('register.html')
+    print(managers)
+
+    return render_template('register.html', managers=managers)
 
 
 ### UPLOAD FEATURE
@@ -288,15 +298,41 @@ def files():
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
     if role_name == 'Admin':
-        cur.execute("SELECT id, filename, uploaded_at, encryption_method, file_size_before, encryption_time, file_size_after, uploaded_by FROM files")
+        cur.execute("SELECT id, filename, uploaded_at, encryption_method, file_size_before, encryption_time, file_size_after, uploaded_by, shared_with_team FROM files")
         uploaded_files = cur.fetchall()
+
+    elif role_name == 'Manager':
+        cur.execute("""SELECT id, filename, uploaded_at, encryption_method, file_size_before, encryption_time,file_size_after, uploaded_by, shared_with_team FROM files 
+            WHERE user_id = %s OR user_id IN (SELECT id FROM users WHERE manager_id = %s)
+            OR shared_with_team = TRUE
+        """, (user_id, user_id))
+        uploaded_files = cur.fetchall()
+
     else:        
-        cur.execute("SELECT id, filename, uploaded_at, encryption_method, file_size_before, encryption_time, file_size_after FROM files WHERE user_id = %s", (user_id,))
+        cur.execute("""SELECT id, filename, uploaded_at, encryption_method, file_size_before, encryption_time, file_size_after, uploaded_by, shared_with_team FROM files 
+                    WHERE user_id = %s" OR shared_with_team = TRUE """, (user_id,))
         uploaded_files = cur.fetchall()
     
     cur.close()
 
     return render_template('files.html', files=uploaded_files)
+
+### FILE SHARING FEATURE
+
+@app.route('/update_share_status/<int:file_id>', methods=['POST'])
+def update_share_status(file_id):
+    
+    data = request.get_json()
+    shared_with_team = data.get('shared_with_team', False)  # Default to False if key is missing
+
+    
+    cur = mysql.connection.cursor()
+    cur.execute("UPDATE files SET shared_with_team = %s WHERE id = %s", (shared_with_team, file_id))
+    mysql.connection.commit()
+    cur.close()
+
+    return jsonify({"message": "File share status updated successfully", "file_id": file_id})
+
 
 
 ### DOWNLOAD FEATURE
@@ -408,33 +444,52 @@ def download(file_id):
 
 ### DELETE FEATURE
 
+def is_manager_of_user(manager_id, employee_id):
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute("SELECT id FROM users WHERE manager_id = %s AND id = %s", (manager_id, employee_id))
+    result = cur.fetchone()
+    return result is not None
+
 
 @app.route('/delete/<int:file_id>', methods=['POST'])
-@role_required('Admin')
 def delete(file_id):
+    if 'user_id' not in session:
+        flash("Please log in to access this page.")
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    role_name = session['role_name']
+
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT filepath, filename FROM files WHERE id = %s", (file_id,))
+    cur.execute("SELECT filepath, filename, uploaded_by, user_id FROM files WHERE id = %s", (file_id,))
     file_data = cur.fetchone()
 
     if file_data:
         file_path = file_data['filepath']
         filename = file_data['filename']
-        try:
-            if os.path.exists(file_path):
-                os.remove(file_path)  # Delete the file from the server
+        uploaded_by = file_data['uploaded_by']
+        file_owner_id = file_data['user_id']
 
-            decrypted_filename = f"decrypted_{os.path.basename(file_path)}"
-            decrypted_filepath = os.path.join(app.config['UPLOAD_FOLDER'], decrypted_filename)
-        
-            if os.path.exists(decrypted_filepath):
-                os.remove(decrypted_filepath)
+        # Check permissions based on the user's role
+        if role_name == 'Admin' or (role_name == 'Manager' and (uploaded_by == session['username'] or is_manager_of_user(user_id, file_owner_id))) or (role_name == 'Employee' and file_owner_id == user_id):
+            try:
+                # Remove the file from the server
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                # Optionally remove decrypted file
+                decrypted_filename = f"decrypted_{os.path.basename(file_path)}"
+                decrypted_filepath = os.path.join(app.config['UPLOAD_FOLDER'], decrypted_filename)
+                if os.path.exists(decrypted_filepath):
+                    os.remove(decrypted_filepath)
 
-
-            cur.execute("DELETE FROM files WHERE id = %s", (file_id,))
-            mysql.connection.commit()
-            flash(f'File {filename} deleted successfully.')
-        except Exception as e:
-            flash(f'Error deleting file: {e}')
+                # Delete file record from the database
+                cur.execute("DELETE FROM files WHERE id = %s", (file_id,))
+                mysql.connection.commit()
+                flash(f'File {filename} deleted successfully.')
+            except Exception as e:
+                flash(f'Error deleting file: {e}')
+        else:
+            flash("You do not have permission to delete this file.")
     else:
         flash('File not found.')
 
@@ -452,19 +507,24 @@ def admin_dashboard():
 @app.route('/manager/files')
 @role_required('Manager')
 def manager_files():
-    return render_template('manager_files.html')
+    return render_template('manager_dashboard.html')
 
 @app.route('/employee/tasks')
 @role_required('Employee')
 def employee_tasks():
-    return render_template('employee_tasks.html')
+    return render_template('employee_dashboard.html')
 
 #### ADMIN 
 app.add_url_rule('/admin/dashboard', 'admin_dashboard', admin_dashboard)
-app.add_url_rule('/admin/view_users', 'view_users', view_users)
+app.add_url_rule('/view_users', 'view_users', view_users)
 app.add_url_rule('/admin/change_user_role/<int:user_id>', 'change_user_role', change_user_role)
 app.add_url_rule('/admin/delete_user/<int:user_id>', 'delete_user', delete_user)
 
+#### MANAGER
+app.add_url_rule('/manager/dashboard', 'manager_dashboard', manager_dashboard)
+
+#### EMPLOYEE
+app.add_url_rule('/employee/dashboard','employee_dashboard', employee_dashboard)
 
 
 if __name__ == "__main__":
