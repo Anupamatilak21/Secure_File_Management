@@ -24,6 +24,17 @@
     <main class="role-dashboard">
         <h1>Welcome to the Manager Dashboard</h1>
 
+        <!-- Placeholder for Feedback Messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class="feedback-messages">
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
         <div class="dashboard-cards">
             <!-- Users Overview -->
             <div class="card">

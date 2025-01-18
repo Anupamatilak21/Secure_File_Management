@@ -309,8 +309,10 @@ def files():
         uploaded_files = cur.fetchall()
 
     else:        
-        cur.execute("""SELECT id, filename, uploaded_at, encryption_method, file_size_before, encryption_time, file_size_after, uploaded_by, shared_with_team FROM files 
-                    WHERE user_id = %s" OR shared_with_team = TRUE """, (user_id,))
+        cur.execute("""
+                    SELECT id, filename, uploaded_at, encryption_method, file_size_before, encryption_time, file_size_after, uploaded_by, shared_with_team 
+                    FROM files 
+                    WHERE user_id = %s OR shared_with_team = TRUE """, (user_id,))
         uploaded_files = cur.fetchall()
     
     cur.close()

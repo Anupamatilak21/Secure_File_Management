@@ -4,18 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure File Sharing</title>
-    <link rel="stylesheet" href="static\style.css">
+    <link rel="stylesheet" href="static\home.css">
 </head>
 <body>
     
-    <header>
-        <h1>Welcome to Secure File Sharing</h1>
-        <p>Please log in to upload and manage your files.</p>
-        <a href="{{ url_for('login') }}">Login</a> | 
-        <a href="{{ url_for('register') }}">Register</a>
-    </header>
+    <div class="header">SecureShare</div>
+    <div class="title">Welcome to SecureShare</div>
+    
+    <div class="description">
+        Enjoy seamless and secure file sharing with SecureShare. Our platform ensures your data is protected
+        with top-notch encryption, providing peace of mind while you share your important files.
+    </div>
 
-    <!-- Placeholder for Feedback Messages -->
+    <div class="buttons">
+        <a class="link" href="{{ url_for('login') }}">Login</a>
+        <a class="link" href="{{ url_for('register') }}">Register</a>
+    </div>
+
+    <div class="footer">
+        © January 2025 SecureShare. All rights reserved.<br>
+    </div>
+
+    <!-- Placeholder for Feedback Messages 
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             <ul class="feedback-messages">
@@ -25,10 +35,7 @@
             </ul>
         {% endif %}
     {% endwith %}
-
-    <footer>
-        <p>&copy; 2025 Secure File Sharing.</p>
-    </footer>
+        -->
     
 </body>
 </html>

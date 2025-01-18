@@ -97,6 +97,21 @@ a {
     background-color: #218838;
 }
 
+.feedback-messages {
+    width: 90%;
+    max-width: 800px;
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 1rem;
+    margin: 1rem auto;
+    border: 1px solid #ffeeba;
+    border-radius: 4px;
+    list-style-type: none;
+}
+
+.feedback-messages li {
+    margin: 0.5rem 0;
+}
 /* Footer 
 footer {
     text-align: center;
