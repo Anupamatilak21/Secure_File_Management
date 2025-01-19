@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Manager Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='role_style.css') }}">
 </head>
 <body>
@@ -22,7 +22,7 @@
 
 
     <main class="role-dashboard">
-        <h1>Welcome to the Admin Dashboard</h1>
+        <h1>Welcome to the Manager Dashboard</h1>
 
         <!-- Placeholder for Feedback Messages -->
         {% with messages = get_flashed_messages() %}
@@ -39,16 +39,16 @@
             <!-- Users Overview -->
             <div class="card">
                 <h2>Users Overview</h2>
-                <p>See the list of employees.</p>
-                <!--  <p>Total Users <strong>{{ total_users }}</strong></p>  -->
+                <p>See the list of employees in your team.</p>
+                <!--<h3>Team Members: {{ total_team_members }}</h3>  -->
                 <a href="{{ url_for('view_users') }}" class="btn btn-primary">View All Users</a>
             </div>
 
             <!-- Files Overview -->
             <div class="card">
                 <h2>Files Overview</h2>
-                <p>View files uploaded by you and other users.</p>
-                <!--  <p>Total Files Uploaded <strong>{{ total_files }}</strong></p> -->
+                <p>View files uploaded by you and your team.</p>
+                <!--<h3>Total Files Uploaded: {{ total_team_files }}</h3>  -->
                 <a href="{{ url_for('files') }}" class="btn btn-primary">View All Files</a>
             </div>
 

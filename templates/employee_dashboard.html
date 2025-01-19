@@ -1,28 +1,23 @@
-<!-- admin_dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Employee Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='role_style.css') }}">
 </head>
 <body>
-
     <header>
         <nav class="navbar">
             <ul class="nav-links">
                 <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                <li><a href="{{ url_for('upload') }}">Upload File</a></li>
-                <li><a href="{{ url_for('logout') }}">Logout</a></li>
-                
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>                
             </ul>
         </nav>
     </header>
 
-
     <main class="role-dashboard">
-        <h1>Welcome to the Admin Dashboard</h1>
+        <h1>Welcome to the Employee Dashboard</h1>
 
         <!-- Placeholder for Feedback Messages -->
         {% with messages = get_flashed_messages() %}
@@ -36,25 +31,19 @@
         {% endwith %}
 
         <div class="dashboard-cards">
-            <!-- Users Overview -->
             <div class="card">
-                <h2>Users Overview</h2>
-                <p>See the list of employees.</p>
-                <!--  <p>Total Users <strong>{{ total_users }}</strong></p>  -->
-                <a href="{{ url_for('view_users') }}" class="btn btn-primary">View All Users</a>
+                <h2>View Files</h2>
+                <p>View all the files you have uploaded.</p>
+                <a href="{{ url_for('files') }}" class="btn btn-primary">View My Files</a>
             </div>
 
-            <!-- Files Overview -->
             <div class="card">
-                <h2>Files Overview</h2>
-                <p>View files uploaded by you and other users.</p>
-                <!--  <p>Total Files Uploaded <strong>{{ total_files }}</strong></p> -->
-                <a href="{{ url_for('files') }}" class="btn btn-primary">View All Files</a>
+                <h2>Upload File</h2>
+                <p>Upload a new file securely.</p>
+                <a href="{{ url_for('upload') }}" class="btn btn-primary">Upload File</a>
             </div>
-
         </div>
     </main>
 
-    
 </body>
 </html>

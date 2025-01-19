@@ -5,11 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Management - Secure File Sharing</title>
     <link rel="stylesheet" href="static/style1.css">
+    <script>
+        function updateShareStatus(fileId, isChecked) {
+            fetch(`/update_share_status/${fileId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ shared_with_team: isChecked ? 1 : 0 })
+
+            })
+            .then(response => response.json())
+            .then(data => {
+                  alert(data.message);
+            })
+            .catch(error => {
+                console.error('Error updating share status:', error);
+            });
+        }
+    </script>
+    
 </head>
 <body>
     <header>
         <h1>Uploaded Files</h1>
     </header>
+    <br>
     
     <table>
         <thead>
@@ -21,6 +42,9 @@
                 <th>File Size Before</th>
                 <th>Encryption Time</th>
                 <th>File Size After</th>
+                {% if session['role_name'] == 'Manager' %}
+                    <th>Shared with Team</th>
+                {% endif %}
                 <th>Actions</th>
             </tr>
         </thead>
@@ -34,6 +58,18 @@
                 <td>{{ file['file_size_before'] }} bytes</td>
                 <td>{{ file['encryption_time'] }} seconds</td>
                 <td>{{ file['file_size_after'] }} bytes</td>
+
+                {% if session['role_name'] == 'Manager' %}
+                <!-- Shared with Team Checkbox -->
+                <td>
+                    <input type="checkbox" 
+                           {% if file['shared_with_team'] == 1 %}checked{% endif %}
+                           onchange="updateShareStatus({{ file['id'] }}, this.checked)"
+
+                </td>
+                {% endif %}
+
+                <!-- Actions -->
                 {% if session['role_name'] == 'Admin' %}
                     <td>
                         <div class="file-actions">
@@ -42,7 +78,29 @@
                                 <button type="submit" class="btn btn-danger">Delete</button>
                             </form>
                         </div>
-                    </td> 
+                    </td>
+                {% elif session['role_name'] == 'Manager' %}
+                    <td>
+                        <div class="file-actions">
+                            <a href="{{ url_for('download', file_id=file.id) }}" class="btn btn-primary">Download</a>
+                            {% if file['uploaded_by'] == session['username'] or session['role_name'] == 'Manager' %}
+                                <form action="{{ url_for('delete', file_id=file.id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                {% elif session['role_name'] == 'Employee' %}
+                    <td>
+                        <div class="file-actions">
+                            <a href="{{ url_for('download', file_id=file.id) }}" class="btn btn-primary">Download</a>
+                            {% if file['uploaded_by'] == session['username'] %}
+                                <form action="{{ url_for('delete', file_id=file.id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </td>
                 {% endif %}               
             </tr>
             {% endfor %}
@@ -62,6 +120,6 @@
         {% endif %}
     {% endwith %}
 
-    <p><a href="{{ url_for('dashboard') }}">Back to Dashboard</a></p>
+    <p><a href="{{ url_for('dashboard') }} "class="btn btn-secondary">Back to Dashboard</a></p>
 </body>
 </html>

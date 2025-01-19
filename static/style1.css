@@ -15,6 +15,12 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin: 20px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+thead {
+    background-color: #007bff;
+    color: white;
 }
 
 table th, table td {
@@ -24,7 +30,7 @@ table th, table td {
 }
 
 table th {
-    background-color: #f2f2f2;
+    background-color: #007bff;
 }
 
 a {
@@ -67,12 +73,20 @@ a:hover {
     outline: none;
 }
 
-.feedback-messages {
-    list-style: none;
+/* Back to dashboard*/
+.btn-secondary {
+    display: block;
+    width: 200px;
+    margin: 30px auto;
     padding: 10px;
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+    text-align: center;
+    background-color: #6c757d;
+    color: white;
     border-radius: 5px;
-    margin: 20px 0;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
 }
