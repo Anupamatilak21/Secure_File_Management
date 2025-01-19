@@ -5,20 +5,24 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "package": "electron-packager . SafeDocs --platform=win32 --arch=x64 --out=C:\\Users\\anupa\\Desktop --overwrite --icon=icon.ico"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Anupamatilak21/secure_file_sharing_website.git"
+    "url": "git+https://github.com/Anupamatilak21/Secure_File_Management.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Anupamatilak21/secure_file_sharing_website/issues"
+    "url": "https://github.com/Anupamatilak21/Secure_File_Management/issues"
   },
-  "homepage": "https://github.com/Anupamatilak21/secure_file_sharing_website#readme",
+  "homepage": "https://github.com/Anupamatilak21/Secure_File_Management#readme",
   "dependencies": {
     "electron": "^33.3.1"
+  },
+  "devDependencies": {
+    "electron-packager": "^17.1.2"
   }
 }
